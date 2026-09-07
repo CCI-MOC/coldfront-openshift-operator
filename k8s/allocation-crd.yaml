@@ -1,0 +1,71 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: allocations.massopen.cloud
+spec:
+  group: massopen.cloud
+  scope: Cluster
+  names:
+    plural: allocations
+    singular: allocation
+    kind: Allocation
+    shortNames:
+      - alloc
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - users
+                - quota
+                - onDeletePolicy
+              properties:
+                users:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                    minLength: 1
+                quota:
+                  type: object
+                  additionalProperties:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    x-kubernetes-int-or-string: true
+                onDeletePolicy:
+                  type: string
+                  enum:
+                    - Delete
+                    - Archive
+                    - Ignore
+                expirationDate:
+                  type: string
+                  format: date
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum:
+                    - Progressing
+                    - Failed
+                    - Ready
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Delete Policy
+          type: string
+          jsonPath: .spec.onDeletePolicy
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
